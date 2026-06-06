@@ -27,6 +27,36 @@ def create_raid_embed(guild, reason, muted_count=0):
     embed.set_footer(text=f"Astra Security • {datetime.datetime.now().strftime('%H:%M')}")
     return embed
 
+# EZ A FÜGGVÉNY HIÁNYZOTT A KÓDODBÓL!
+def create_live_log_embed(user, action_name):
+    embed = discord.Embed(title="🔔 ESEMÉNY DETEKTÁLVA", color=0x00FF00)
+    embed.add_field(name="▶ Elkövető", value=f"{user.name} (`{user.id}`)", inline=True)
+    embed.add_field(name="▶ Művelet", value=f"`{action_name}`", inline=True)
+    embed.set_footer(text=f"Astra Security • {datetime.datetime.now().strftime('%H:%M:%S')}")
+    return embed
+
+async def check_action(guild, user_id, action_type, reason, count=0):
+    if not user_id or user_id == bot.user.id: return
+    
+    # Folyamatos logolás
+    log_channel = bot.get_channel(LOG_CHANNEL_ID)
+    member = guild.get_member(user_id)
+    if log_channel and member:
+        await log_channel.send(embed=create_live_log_embed(member, reason))
+
+    # Védelmi logika
+    now = datetime.datetime.now()
+    tracker[action_type][user_id].append(now)
+    tracker[action_type][user_id] = [t for t in tracker[action_type][user_id] if (now - t).seconds < 60]
+    
+    if len(tracker[action_type][user_id]) > 3:
+        if member:
+            try: await member.timeout(datetime.timedelta(minutes=30), reason=f"Anti-Nuke: {reason}")
+            except: pass
+        if log_channel: 
+            await log_channel.send(embed=create_raid_embed(guild, reason, count))
+        return True
+    return False
 async def check_action(guild, user_id, action_type, reason, count=0):
     if not user_id or user_id == bot.user.id: return
     
@@ -98,5 +128,22 @@ async def on_scheduled_event_create(e):
 @commands.has_permissions(administrator=True)
 async def unlock(ctx):
     await ctx.send("✅ Astra Security: Szerver feloldva.")
+    
+@bot.command()
+async def teszt(ctx):
+    """Parancs a logolás és a rendszer tesztelésére."""
+    # Teszt embed küldése a log csatornába
+    log_channel = bot.get_channel(LOG_CHANNEL_ID)
+    if log_channel:
+        embed = discord.Embed(
+            title="🧪 Rendszer Teszt",
+            description="A logoló rendszer sikeresen csatlakozott.",
+            color=0x00AAFF
+        )
+        embed.set_footer(text=f"Tesztelve: {ctx.author.name}")
+        await log_channel.send(embed=embed)
+        await ctx.send("✅ Teszt üzenet elküldve a log csatornába!")
+    else:
+        await ctx.send("❌ Hiba: A log csatorna ID nem található vagy érvénytelen.")
 
 bot.run(TOKEN)
