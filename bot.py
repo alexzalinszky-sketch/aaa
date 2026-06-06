@@ -29,17 +29,25 @@ def create_raid_embed(guild, reason, muted_count=0):
 
 async def check_action(guild, user_id, action_type, reason, count=0):
     if not user_id or user_id == bot.user.id: return
+    
+    # --- FOLYAMATOS LOGOLÁS (Minden eseménynél fut) ---
+    log_channel = bot.get_channel(LOG_CHANNEL_ID)
+    member = guild.get_member(user_id)
+    if log_channel and member:
+        await log_channel.send(embed=create_live_log_embed(member, reason))
+
+    # --- VÉDELMI LOGIKA (Csak ha sok a gyanús esemény) ---
     now = datetime.datetime.now()
     tracker[action_type][user_id].append(now)
     tracker[action_type][user_id] = [t for t in tracker[action_type][user_id] if (now - t).seconds < 60]
     
     if len(tracker[action_type][user_id]) > 3:
-        member = guild.get_member(user_id)
         if member:
             try: await member.timeout(datetime.timedelta(minutes=30), reason=f"Anti-Nuke: {reason}")
             except: pass
-        log_channel = bot.get_channel(LOG_CHANNEL_ID)
-        if log_channel: await log_channel.send(embed=create_raid_embed(guild, reason, count))
+        # Ha eléri a limitet, küldi a RAID embedet is
+        if log_channel: 
+            await log_channel.send(embed=create_raid_embed(guild, reason, count))
         return True
     return False
 
