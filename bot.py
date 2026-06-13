@@ -39,41 +39,21 @@ async def check_action(guild, user_id, action_type, reason, count=0):
     if not user_id or user_id == bot.user.id:
         return
 
-    # Folyamatos logolás
     log_channel = bot.get_channel(LOG_CHANNEL_ID)
     member = guild.get_member(user_id)
 
+    # Esemény log
     if log_channel and member:
         await log_channel.send(
             embed=create_live_log_embed(member, reason)
         )
 
-    # Anti-Nuke számláló
-    now = datetime.datetime.now()
-    tracker[action_type][user_id].append(now)
+    # TESZT MÓD
+    if log_channel:
+        await log_channel.send(
+            embed=create_raid_embed(guild, f"TESZT • {reason}", 0)
+        )
 
-    tracker[action_type][user_id] = [
-        t for t in tracker[action_type][user_id]
-        if (now - t).total_seconds() < 60
-    ]
-
-    if len(tracker[action_type][user_id]) > 3:
-        if member:
-            try:
-                await member.timeout(
-                    datetime.timedelta(minutes=30),
-                    reason=f"Anti-Nuke: {reason}"
-                )
-            except Exception as e:
-                print(e)
-
-        if log_channel:
-            await log_channel.send(
-                embed=create_raid_embed(guild, reason, count)
-            )
-
-        return True
-
-    return False
+    return True
 
 bot.run(TOKEN)
