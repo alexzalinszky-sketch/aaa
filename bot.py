@@ -27,33 +27,54 @@ def create_raid_embed(guild, reason, muted_count=0):
     embed.set_footer(text=f"Astra Security • {datetime.datetime.now().strftime('%H:%M')}")
     return embed
 
-# EZ A FÜGGVÉNY HIÁNYZOTT A KÓDODBÓL!
+# Log embed
 def create_live_log_embed(user, action_name):
-    embed = discord.Embed(title="🔔 ESEMÉNY DETEKTÁLVA", color=0x00FF00)
-    embed.add_field(name="▶ Elkövető", value=f"{user.name} (`{user.id}`)", inline=True)
-    embed.add_field(name="▶ Művelet", value=f"`{action_name}`", inline=True)
-    embed.set_footer(text=f"Astra Security • {datetime.datetime.now().strftime('%H:%M:%S')}")
+    embed = discord.Embed(
+        title="🔔 ESEMÉNY DETEKTÁLVA",
+        color=0x00FF00
+    )
+
+    embed.add_field(
+        name="▶ Elkövető",
+        value=f"{user.name} (`{user.id}`)",
+        inline=True
+    )
+
+    embed.add_field(
+        name="▶ Művelet",
+        value=f"`{action_name}`",
+        inline=True
+    )
+
+    embed.set_footer(
+        text=f"Astra Security • {datetime.datetime.now().strftime('%H:%M:%S')}"
+    )
+
     return embed
 
+
 async def check_action(guild, user_id, action_type, reason, count=0):
-    if not user_id or user_id == bot.user.id:
-        return
-
     log_channel = bot.get_channel(LOG_CHANNEL_ID)
-    member = guild.get_member(user_id)
 
-    # Esemény log
-    if log_channel and member:
+    if not log_channel:
+        return False
+
+    member = guild.get_member(user_id) if user_id else None
+
+    # Normál log
+    if member:
         await log_channel.send(
             embed=create_live_log_embed(member, reason)
         )
 
-    # TESZT MÓD
-    if log_channel:
-        await log_channel.send(
-            embed=create_raid_embed(guild, f"TESZT • {reason}", 0)
+    # TESZT RAID EMBED
+    await log_channel.send(
+        embed=create_raid_embed(
+            guild,
+            f"🚨 TESZT NUKE DETEKTÁLVA • {reason}",
+            0
         )
+    )
 
     return True
-
 bot.run(TOKEN)
