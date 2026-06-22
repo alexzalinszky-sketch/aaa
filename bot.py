@@ -11,7 +11,7 @@ load_dotenv()
 #               BEÁLLÍTÁSOK
 # ==========================================
 TOKEN = os.getenv("DISCORD_TOKEN")
-WHITELIST_IDS = 0
+WHITELIST_IDS = []
 PUNISH_ROLE_ID = 0   # <-- IDE ÍRD A BÜNTETŐ RANGOD ID-JÁT!
 LOG_CHANNEL_ID = 1518687968917979206                # <-- Ide írhatsz egy csatorna ID-t, ha a tulaj DM-je mellett csatornára is akarsz logot
 
